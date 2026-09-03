@@ -1,0 +1,6 @@
+flask==3.0.3
+requests==2.32.3
+pandas==2.2.2
+python-dotenv==1.0.1
+# optional, only needed if you wire up the AI-assisted narrative extension:
+# openai==1.40.0

@@ -1,0 +1,68 @@
+---
+title: "HORECA Competition Lens — Report"
+format:
+  typst:
+    papersize: a4
+execute:
+  echo: false
+  warning: false
+params:
+  data_file: "data/example.json"
+---
+
+```{python}
+#| output: asis
+import json
+from pathlib import Path
+
+data = json.loads(Path(params["data_file"]).read_text())
+
+print(f"""
+## Search parameters
+
+- **Address:** {data['address']}
+- **Category:** {data['category']}
+- **Search radius:** {data['radius_m']} metres
+""")
+```
+
+```{python}
+#| output: asis
+print("## Closest matching establishments\n")
+
+rows = data["top5"]
+if rows:
+    print("| # | Name | Type | Website | Distance |")
+    print("|---|------|------|---------|----------|")
+    for i, p in enumerate(rows, start=1):
+        website = p["website"] or "—"
+        print(f"| {i} | {p['name']} | {p['type']} | {website} | {p['distance_m']} m |")
+else:
+    print("_No matching establishments were found within the search radius._")
+```
+
+```{python}
+#| output: asis
+closest = data["closest_distance_m"]
+closest_str = f"{closest:.0f} m" if closest is not None else "n/a"
+
+print(f"""
+## Summary statistics
+
+- **Total matching mapped establishments within radius:** {data['match_count']}
+- **Distance to closest match:** {closest_str}
+
+## Indicative competition assessment
+
+{data['assessment_text']}
+
+## Limitations
+
+OpenStreetMap is a crowd-sourced dataset. Coverage and metadata (such as
+opening hours or websites) can be incomplete, outdated, or missing entirely
+in some areas, and business closures are not always reflected quickly.
+This report is an exploratory indication only — validate findings through
+local field research, official business registers, and a clearer definition
+of the intended concept before making a real location decision.
+""")
+```

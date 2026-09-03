@@ -1,0 +1,49 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <title>Results — HORECA Competition Lens</title>
+  <style>
+    body { font-family: sans-serif; max-width: 720px; margin: 40px auto; }
+    table { width: 100%; border-collapse: collapse; margin-top: 16px; }
+    th, td { border: 1px solid #ccc; padding: 8px; text-align: left; }
+    .assessment { background: #f4f4e8; border-left: 4px solid #a3a30a; padding: 12px; margin-top: 20px; }
+    .note { font-size: 0.9em; color: #555; }
+    a.button { display: inline-block; margin-top: 20px; padding: 10px 16px;
+               background: #333; color: white; text-decoration: none; }
+  </style>
+</head>
+<body>
+  <p><a href="{{ url_for('index') }}">&larr; New search</a></p>
+  <h1>Results for: {{ data.address }}</h1>
+  <p><strong>Category:</strong> {{ data.category }} &middot; <strong>Radius:</strong> {{ data.radius_m }} m</p>
+  <p><strong>Total matches within radius:</strong> {{ data.match_count }}</p>
+
+  {% if fewer_than_5 %}
+    <p class="note">Fewer than 5 matches found — showing all {{ data.match_count }} available result(s).</p>
+  {% endif %}
+
+  <table>
+    <thead>
+      <tr><th>#</th><th>Name</th><th>Type</th><th>Website</th><th>Distance</th></tr>
+    </thead>
+    <tbody>
+      {% for p in data.top5 %}
+        <tr>
+          <td>{{ loop.index }}</td>
+          <td>{{ p.name }}</td>
+          <td>{{ p.type }}</td>
+          <td>{% if p.website %}<a href="{{ p.website }}" target="_blank">link</a>{% else %}—{% endif %}</td>
+          <td>{{ p.distance_m }} m</td>
+        </tr>
+      {% endfor %}
+    </tbody>
+  </table>
+
+  <div class="assessment">
+    {{ data.assessment_text }}
+  </div>
+
+  <a class="button" href="{{ url_for('report', session_id=session_id) }}">Download PDF report</a>
+</body>
+</html>

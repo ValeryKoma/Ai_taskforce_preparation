@@ -1,0 +1,130 @@
+"""Flask app: HORECA competition lens.
+
+Enter an address + category, see the 5 closest matching OSM establishments
+within 1 km, and generate a Quarto PDF report of the analysis.
+"""
+import json
+import subprocess
+import uuid
+from pathlib import Path
+
+from flask import Flask, flash, redirect, render_template, request, send_file, url_for
+
+from analysis import assess_competition
+from osm_client import GeocodeError, find_establishments, geocode
+
+app = Flask(__name__)
+app.secret_key = "dev-only-secret-key"  # fine for local use, not for production
+
+BASE_DIR = Path(__file__).parent
+DATA_DIR = BASE_DIR / "data"
+DATA_DIR.mkdir(exist_ok=True)
+
+RADIUS_M = 1000
+CATEGORIES = ["cafe", "restaurant", "hotel"]
+
+
+@app.route("/", methods=["GET"])
+def index():
+    return render_template("index.html", categories=CATEGORIES)
+
+
+@app.route("/search", methods=["POST"])
+def search():
+    address = request.form.get("address", "").strip()
+    category = request.form.get("category", "").strip()
+
+    if not address or category not in CATEGORIES:
+        flash("Please enter an address and pick a valid category.")
+        return redirect(url_for("index"))
+
+    try:
+        lat, lon = geocode(address)
+    except GeocodeError as exc:
+        flash(str(exc))
+        return redirect(url_for("index"))
+    except Exception as exc:  # network / API issues
+        flash(f"Could not look up that address: {exc}")
+        return redirect(url_for("index"))
+
+    try:
+        places = find_establishments(lat, lon, category, RADIUS_M)
+    except Exception as exc:
+        flash(f"Could not query OpenStreetMap: {exc}")
+        return redirect(url_for("index"))
+
+    top5 = places[:5]
+    closest_distance = places[0].distance_m if places else None
+    assessment = assess_competition(len(places), closest_distance, category)
+
+    result_data = {
+        "address": address,
+        "category": category,
+        "radius_m": RADIUS_M,
+        "lat": lat,
+        "lon": lon,
+        "match_count": len(places),
+        "closest_distance_m": closest_distance,
+        "assessment_level": assessment.level,
+        "assessment_text": assessment.text,
+        "top5": [
+            {
+                "name": p.name,
+                "type": p.place_type,
+                "website": p.website,
+                "distance_m": round(p.distance_m, 1),
+            }
+            for p in top5
+        ],
+    }
+
+    # Persist so /report can render a PDF without resubmitting the form.
+    session_id = uuid.uuid4().hex[:8]
+    data_path = DATA_DIR / f"{session_id}.json"
+    data_path.write_text(json.dumps(result_data, indent=2))
+
+    return render_template(
+        "results.html",
+        data=result_data,
+        session_id=session_id,
+        fewer_than_5=len(places) < 5,
+    )
+
+
+@app.route("/report/<session_id>", methods=["GET"])
+def report(session_id):
+    data_path = DATA_DIR / f"{session_id}.json"
+    if not data_path.exists():
+        flash("Search data expired or not found. Please search again.")
+        return redirect(url_for("index"))
+
+    qmd_path = BASE_DIR / "report.qmd"
+    pdf_name = f"{session_id}.pdf"
+
+    cmd = [
+        "quarto",
+        "render",
+        str(qmd_path),
+        "-P",
+        f"data_file:{data_path}",
+        "-o",
+        pdf_name,
+        "--output-dir",
+        str(DATA_DIR),
+    ]
+
+    result = subprocess.run(cmd, capture_output=True, text=True)
+    pdf_out = DATA_DIR / pdf_name
+
+    if result.returncode != 0 or not pdf_out.exists():
+        flash(
+            "Quarto render failed. Check that Quarto (and the typst backend) is "
+            "installed and on PATH. Details: " + result.stderr[-800:]
+        )
+        return redirect(url_for("index"))
+
+    return send_file(pdf_out, as_attachment=True, download_name="horeca_report.pdf")
+
+
+if __name__ == "__main__":
+    app.run(debug=True, port=5000)

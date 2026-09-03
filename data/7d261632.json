@@ -1,0 +1,31 @@
+{
+  "address": "Schenklaan",
+  "category": "cafe",
+  "radius_m": 1000,
+  "lat": 52.0349797,
+  "lon": 4.3598108,
+  "match_count": 3,
+  "closest_distance_m": 745.8013519281145,
+  "assessment_level": "moderate",
+  "assessment_text": "Indicative competition assessment: moderate. The OpenStreetMap query identified 3 mapped cafe establishment(s) within the search radius. The nearest mapped cafe is approximately 746 metres away. Validate these results through local field research and a clearer definition of the intended concept before making a location decision.",
+  "top5": [
+    {
+      "name": "Starbucks",
+      "type": "cafe",
+      "website": "https://www.starbucks.nl/",
+      "distance_m": 745.8
+    },
+    {
+      "name": "Bubble Bae",
+      "type": "cafe",
+      "website": "https://vuursteen.midnightrotishop.nl",
+      "distance_m": 839.0
+    },
+    {
+      "name": "Eetcaf\u00e9 en Brasserie Preziez",
+      "type": "cafe",
+      "website": null,
+      "distance_m": 881.9
+    }
+  ]
+}
