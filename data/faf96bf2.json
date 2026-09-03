@@ -1,0 +1,43 @@
+{
+  "address": "spui",
+  "category": "cafe",
+  "radius_m": 1000,
+  "lat": 52.3687817,
+  "lon": 4.889683,
+  "match_count": 204,
+  "closest_distance_m": 64.47573945806799,
+  "assessment_level": "higher",
+  "assessment_text": "Indicative competition assessment: higher. The OpenStreetMap query identified 204 mapped cafe establishment(s) within the search radius. The nearest mapped cafe is approximately 64 metres away. Note: a direct competitor is very nearby (under 250 m), which may strongly affect footfall and visibility. Validate these results through local field research and a clearer definition of the intended concept before making a location decision.",
+  "top5": [
+    {
+      "name": "Coffee Company",
+      "type": "cafe",
+      "website": null,
+      "distance_m": 64.5
+    },
+    {
+      "name": "Caf\u00e9 de Zwart",
+      "type": "cafe",
+      "website": null,
+      "distance_m": 75.3
+    },
+    {
+      "name": "'t Doktertje",
+      "type": "cafe",
+      "website": null,
+      "distance_m": 93.7
+    },
+    {
+      "name": "De Koffiesalon",
+      "type": "cafe",
+      "website": "https://www.dekoffiesalon.nl/",
+      "distance_m": 98.7
+    },
+    {
+      "name": "Chatime",
+      "type": "cafe",
+      "website": null,
+      "distance_m": 102.0
+    }
+  ]
+}

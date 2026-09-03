@@ -4,7 +4,11 @@ Enter an address + category, see the 5 closest matching OSM establishments
 within 1 km, and generate a Quarto PDF report of the analysis.
 """
 import json
+import os
+import shutil
 import subprocess
+import sys
+import tempfile
 import uuid
 from pathlib import Path
 
@@ -22,6 +26,26 @@ DATA_DIR.mkdir(exist_ok=True)
 
 RADIUS_M = 1000
 CATEGORIES = ["cafe", "restaurant", "hotel"]
+
+
+def find_quarto():
+    """Return the configured Quarto executable, if it is available."""
+    configured_path = os.environ.get("QUARTO_BIN")
+    if configured_path:
+        return configured_path if Path(configured_path).exists() else None
+
+    on_path = shutil.which("quarto")
+    if on_path:
+        return on_path
+
+    windows_install = Path(os.environ.get("LOCALAPPDATA", "")) / "Programs" / "Quarto" / "bin" / "quarto.exe"
+    return str(windows_install) if windows_install.exists() else None
+
+
+def find_python():
+    """Return the project interpreter used for Quarto's Jupyter kernel."""
+    project_python = BASE_DIR / ".venv" / "Scripts" / "python.exe"
+    return str(project_python) if project_python.exists() else sys.executable
 
 
 @app.route("/", methods=["GET"])
@@ -100,21 +124,43 @@ def report(session_id):
 
     qmd_path = BASE_DIR / "report.qmd"
     pdf_name = f"{session_id}.pdf"
+    quarto = find_quarto()
+    if not quarto:
+        flash(
+            "Quarto was not found. Add it to PATH or set QUARTO_BIN to the "
+            "full path of the Quarto executable."
+        )
+        return redirect(url_for("index"))
 
-    cmd = [
-        "quarto",
-        "render",
-        str(qmd_path),
-        "-P",
-        f"data_file:{data_path}",
-        "-o",
-        pdf_name,
-        "--output-dir",
-        str(DATA_DIR),
-    ]
+    # IMPORTANT (Windows): Quarto parses -P values as YAML. Backslashes in
+    # Windows paths (e.g. \data\, \Ai_taskforce...) can be misread as YAML
+    # escape sequences and corrupt the path, causing a FileNotFoundError
+    # inside the rendered notebook even though the file exists on disk.
+    # Forward slashes are valid on Windows and safe in YAML, so we convert.
+    data_file_arg = data_path.as_posix()
+    render_environment = os.environ.copy()
+    render_environment["QUARTO_PYTHON"] = find_python()
 
-    result = subprocess.run(cmd, capture_output=True, text=True)
-    pdf_out = DATA_DIR / pdf_name
+    with tempfile.TemporaryDirectory(prefix="quarto-", dir=BASE_DIR) as render_dir:
+        cmd = [
+            quarto,
+            "render",
+            str(qmd_path),
+            "-P",
+            f"data_file:{data_file_arg}",
+            "-o",
+            pdf_name,
+            "--output-dir",
+            render_dir,
+        ]
+
+        result = subprocess.run(
+            cmd, capture_output=True, text=True, env=render_environment
+        )
+        rendered_pdf = Path(render_dir) / pdf_name
+        pdf_out = DATA_DIR / pdf_name
+        if result.returncode == 0 and rendered_pdf.exists():
+            shutil.move(str(rendered_pdf), pdf_out)
 
     if result.returncode != 0 or not pdf_out.exists():
         flash(
