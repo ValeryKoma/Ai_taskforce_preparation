@@ -84,13 +84,13 @@ data/             Per-search JSON + generated PDFs (gitignored)
 ## Reflection (fill this in for submission)
 
 **What worked well?**
-—
+The Flask workflow, OSM lookup, rule-based assessment, and Quarto PDF report now work together as one flow.
 
 **What did not work at first?**
-—
+Quarto could not find the correct Python environment, and rendering into `data/` removed the JSON input before it was read.
 
 **What is one issue you solved by iterating with your coding harness?**
-—
+We traced the missing-file error, isolated Quarto output in a temporary directory, and verified that the endpoint returns a PDF successfully.
 
 **What is one thing you still do not understand or want to discuss in the workshop?**
-—
+We would like to discuss how to make results reproducible when the application depends on changing live OpenStreetMap data.
