@@ -44,8 +44,15 @@ def find_quarto():
 
 def find_python():
     """Return the project interpreter used for Quarto's Jupyter kernel."""
-    project_python = BASE_DIR / ".venv" / "Scripts" / "python.exe"
-    return str(project_python) if project_python.exists() else sys.executable
+    venv_dir = BASE_DIR / ".venv"
+    candidates = (
+        venv_dir / "Scripts" / "python.exe",
+        venv_dir / "bin" / "python",
+    )
+    for project_python in candidates:
+        if project_python.exists():
+            return str(project_python)
+    return sys.executable
 
 
 @app.route("/", methods=["GET"])

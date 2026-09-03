@@ -12,16 +12,29 @@ Given an address and a category (café / restaurant / hotel), the app:
 
 ## Setup
 
+Use Python 3.11 (also recorded in `.python-version`) and create the virtual
+environment from the repository root.
+
+macOS/Linux:
 ```bash
 python -m venv .venv
-source .venv/bin/activate      # Windows: .venv\Scripts\activate
+source .venv/bin/activate
 pip install -r requirements.txt
 ```
 
-You also need [Quarto](https://quarto.org/docs/get-started/) installed and on your PATH.
-Check it works:
+Windows PowerShell:
+```powershell
+py -3.11 -m venv .venv
+.venv\Scripts\Activate.ps1
+python -m pip install -r requirements.txt
+```
+
+You also need [Quarto](https://quarto.org/docs/get-started/) 1.8 or newer
+installed and on your PATH. The app supports the standard Quarto installers
+on macOS, Linux, and Windows. Check it and the Python report dependencies:
 ```bash
 quarto check
+python -c "import jupyter, papermill; print('Python report dependencies: OK')"
 ```
 
 The report uses `format: typst`, so you normally don't need a full LaTeX
@@ -29,6 +42,8 @@ install. If rendering fails the first time, try:
 ```bash
 quarto install tool typst
 ```
+Run that command once on each machine. Quarto downloads the appropriate
+platform-specific Typst tool.
 or switch `report.qmd`'s `format:` to `pdf` and run `quarto install tinytex` instead.
 
 ## Run
